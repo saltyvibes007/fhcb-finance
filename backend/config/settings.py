@@ -148,7 +148,18 @@ SIMPLE_JWT = {
 }
 
 # CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'false').lower() == 'true'
+CORS_ALLOWED_ORIGINS = [
+    'https://uat-corp.bloomfi.ai',
+    'https://corp.bloomfi.ai',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
+# Allow additional origins from env
+_extra_origins = os.getenv('CORS_EXTRA_ORIGINS', '')
+if _extra_origins:
+    CORS_ALLOWED_ORIGINS.extend([o.strip() for o in _extra_origins.split(',') if o.strip()])
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -157,6 +168,10 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # Admin Password for creating organizations
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+
+# Railway metadata
+RAILWAY_BRANCH = os.getenv('RAILWAY_GIT_BRANCH', 'unknown')
+RAILWAY_COMMIT = os.getenv('RAILWAY_GIT_COMMIT_SHA', 'unknown')
 
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
