@@ -1,5 +1,5 @@
 setuptools>=69.0.0
-wheel
+wheel>=0.42.0
 Django>=4.2,<5.0
 djangorestframework>=3.14
 django-cors-headers>=4.3

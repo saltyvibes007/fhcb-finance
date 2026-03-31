@@ -1,18 +1,48 @@
 import os
 from pathlib import Path
-import dj_database_url
-from dotenv import load_dotenv
 from datetime import timedelta
-
-load_dotenv()
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-key")
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me-in-production')
+# ---------------------------------------------------------------------------
+# Branch-aware environment config (follows RTT pattern)
+# Railway auto-provides RAILWAY_GIT_BRANCH and RAILWAY_GIT_COMMIT_SHA.
+# ---------------------------------------------------------------------------
+GIT_BRANCH = os.environ.get("RAILWAY_GIT_BRANCH", os.environ.get("GIT_BRANCH", "main"))
+GIT_COMMIT = os.environ.get("RAILWAY_GIT_COMMIT_SHA", os.environ.get("GIT_COMMIT", "unknown"))
 
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+IS_PRODUCTION = GIT_BRANCH == "main"
 
-ALLOWED_HOSTS = ['*']
+import sys
+_argv0 = sys.argv[0] if sys.argv else ''
+if 'runserver' in _argv0 or 'gunicorn' in _argv0:
+    print(f"[DJANGO] Branch: {GIT_BRANCH}, Production: {IS_PRODUCTION}, Commit: {GIT_COMMIT}")
+
+BASE_DOMAIN = "corp.bloomfi.ai"
+
+# Calculated URLs — branch-prefixed subdomain for non-prod
+# Production: backend-corp.bloomfi.ai / corp.bloomfi.ai
+# UAT:        uat-backend-corp.bloomfi.ai / uat-corp.bloomfi.ai
+if IS_PRODUCTION:
+    BACKEND_URL = f"https://backend-{BASE_DOMAIN}"
+    FRONTEND_URL = f"https://{BASE_DOMAIN}"
+else:
+    BACKEND_URL = f"https://{GIT_BRANCH}-backend-{BASE_DOMAIN}"
+    FRONTEND_URL = f"https://{GIT_BRANCH}-{BASE_DOMAIN}"
+
+DEBUG = not IS_PRODUCTION if os.environ.get("DEBUG") is None else os.environ.get("DEBUG", "false").lower() == "true"
+
+ALLOWED_HOSTS = [
+    f"{GIT_BRANCH}-backend-{BASE_DOMAIN}" if not IS_PRODUCTION else f"backend-{BASE_DOMAIN}",
+    f"backend-{BASE_DOMAIN}",
+    f"uat-backend-{BASE_DOMAIN}",
+    "localhost",
+    "127.0.0.1",
+    ".up.railway.app",
+    "healthcheck.railway.app",
+] + [h for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h]
 
 # Application definition
 DJANGO_APPS = [
@@ -87,39 +117,29 @@ else:
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework
+# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -139,7 +159,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# JWT Settings
+# JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -147,32 +167,29 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# CORS Settings
-# CORS
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', 'false').lower() == 'true'
-CORS_ALLOWED_ORIGINS = [
-    'https://uat-corp.bloomfi.ai',
-    'https://corp.bloomfi.ai',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
+# CORS — derived from branch (follows RTT pattern)
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+_branch_cors_origins = [
+    FRONTEND_URL,
+    f"https://www.{BASE_DOMAIN}",
 ]
-# Allow additional origins from env
-_extra_origins = os.getenv('CORS_EXTRA_ORIGINS', '')
-if _extra_origins:
-    CORS_ALLOWED_ORIGINS.extend([o.strip() for o in _extra_origins.split(',') if o.strip()])
-
+_env_cors = [o for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o]
+CORS_ALLOWED_ORIGINS = list(set(_branch_cors_origins + _env_cors)) if not DEBUG else []
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept", "authorization", "content-type", "origin",
+    "x-csrftoken", "x-requested-with",
+]
 
-# OpenAI API Key
+# CSRF
+CSRF_TRUSTED_ORIGINS = [FRONTEND_URL, BACKEND_URL]
+
+# OpenAI
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-# Admin Password for creating organizations
+# Admin Password
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 
-# Railway metadata
-RAILWAY_BRANCH = os.getenv('RAILWAY_GIT_BRANCH', 'unknown')
-RAILWAY_COMMIT = os.getenv('RAILWAY_GIT_COMMIT_SHA', 'unknown')
-
-# File Upload Settings
+# File Upload
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB

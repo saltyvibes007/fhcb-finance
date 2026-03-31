@@ -1,11 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: "standalone",
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://uat-backend-corp.bloomfi.ai',
-    NEXT_PUBLIC_BRANCH: process.env.RAILWAY_GIT_BRANCH || 'unknown',
-    NEXT_PUBLIC_COMMIT: process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown',
+    NEXT_PUBLIC_GIT_BRANCH:
+      process.env.RAILWAY_GIT_BRANCH ||
+      process.env.GIT_BRANCH ||
+      "main",
+    NEXT_PUBLIC_GIT_COMMIT:
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      process.env.GIT_COMMIT ||
+      "unknown",
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
