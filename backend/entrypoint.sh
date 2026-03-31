@@ -20,6 +20,10 @@ print('DB reset.')
 }
 echo "Migrations complete."
 
+echo "Provisioning superuser..."
+python manage.py createsuperuser --noinput 2>/dev/null || true
+echo "Superuser provisioning done."
+
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 echo "Static files collected."
