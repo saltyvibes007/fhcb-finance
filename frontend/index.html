@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FHCB Financial Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{font-family:'Inter',sans-serif;background:#0f1117;color:#e2e8f0;overflow-x:hidden;width:100%;max-width:100vw;}
+html{overflow-x:hidden;width:100%;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0f1117 0%,#1a1d2e 50%,#0f1117 100%);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s;}
+#login-screen.hidden{opacity:0;pointer-events:none;}
+.login-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:48px;width:400px;text-align:center;backdrop-filter:blur(20px);}
+.login-box .logo{font-size:14px;font-weight:700;letter-spacing:4px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:32px;}
+.login-box h2{font-size:24px;font-weight:700;margin-bottom:8px;color:#fff;}
+.login-box p{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:32px;}
+.login-box input{width:100%;padding:14px 20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:16px;text-align:center;letter-spacing:2px;}
+.login-box input:focus{border-color:#3b82f6;}
+.login-box button{width:100%;padding:14px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:transform 0.15s;}
+.login-box button:hover{transform:scale(1.02);}
+.login-error{color:#ef4444;font-size:13px;margin-top:8px;display:none;}
+
+/* MAIN APP */
+#app{display:none;min-height:100vh;}
+#app.visible{display:block;}
+
+/* NAV */
+nav{background:rgba(15,17,23,0.95);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 40px;display:flex;align-items:center;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);}
+.nav-brand{font-size:13px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-right:40px;padding:20px 0;}
+.nav-tabs{display:flex;gap:0;}
+.nav-tab{padding:20px 24px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;letter-spacing:0.5px;}
+.nav-tab:hover{color:rgba(255,255,255,0.7);}
+.nav-tab.active{color:#3b82f6;border-bottom-color:#3b82f6;}
+.nav-date{margin-left:auto;font-size:12px;color:rgba(255,255,255,0.25);font-weight:500;}
+
+/* PAGE */
+.page{display:none;padding:32px 40px 80px;max-width:1400px;margin:0 auto;animation:fadeIn 0.3s;overflow-x:hidden;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* HEADER */
+.page-header{margin-bottom:32px;}
+.page-header h1{font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px;}
+.page-header p{font-size:14px;color:rgba(255,255,255,0.4);margin-top:4px;}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+.kpi{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:24px;}
+.kpi .kpi-label{font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;}
+.kpi .kpi-value{font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px;}
+.kpi .kpi-sub{font-size:12px;margin-top:6px;font-weight:500;}
+.kpi .kpi-sub.up{color:#22c55e;}
+.kpi .kpi-sub.down{color:#ef4444;}
+.kpi .kpi-sub.neutral{color:rgba(255,255,255,0.3);}
+.kpi.accent{background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.04));border-color:rgba(59,130,246,0.2);}
+.kpi.accent .kpi-value{color:#60a5fa;}
+
+/* CARDS */
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:28px;margin-bottom:20px;}
+.card h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;}
+.card .card-sub{font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:20px;}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;}
+table th{text-align:left;padding:10px 16px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.06);}
+table td{padding:10px 16px;font-size:14px;color:#cbd5e1;border-bottom:1px solid rgba(255,255,255,0.03);}
+table tr:hover td{background:rgba(255,255,255,0.02);}
+table .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500;}
+table .total td{font-weight:700;color:#fff;border-top:2px solid rgba(255,255,255,0.1);border-bottom:none;padding-top:14px;}
+table .subtotal td{font-weight:600;color:#94a3b8;border-top:1px solid rgba(255,255,255,0.06);}
+table .indent td:first-child{padding-left:32px;color:rgba(255,255,255,0.5);}
+table .section-head td{font-weight:700;color:#60a5fa;padding-top:20px;font-size:13px;text-transform:uppercase;letter-spacing:1px;}
+table .positive{color:#22c55e;}
+table .negative{color:#ef4444;}
+
+/* 2-COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+
+/* BAR CHART (CSS) */
+.bar-chart{margin:8px 0;}
+.bar-row{display:flex;align-items:center;margin:6px 0;}
+.bar-label{width:60px;font-size:12px;color:rgba(255,255,255,0.5);font-weight:500;}
+.bar-track{flex:1;height:28px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;position:relative;}
+.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 10px;justify-content:flex-end;font-size:11px;font-weight:700;color:#fff;min-width:40px;transition:width 0.8s ease;}
+.bar-fill.revenue{background:linear-gradient(90deg,#22c55e,#16a34a);}
+.bar-fill.expense{background:linear-gradient(90deg,#ef4444,#dc2626);}
+.bar-fill.cash{background:linear-gradient(90deg,#3b82f6,#2563eb);}
+.bar-fill.net-pos{background:linear-gradient(90deg,#22c55e,#16a34a);}
+.bar-fill.net-neg{background:linear-gradient(90deg,#ef4444,#dc2626);}
+.bar-amount{width:80px;text-align:right;font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);margin-left:12px;}
+
+/* INSIGHT CARDS */
+.insight{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:24px;margin-bottom:16px;display:flex;gap:20px;align-items:flex-start;}
+.insight .insight-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.insight .insight-icon.red{background:rgba(239,68,68,0.12);}
+.insight .insight-icon.yellow{background:rgba(234,179,8,0.12);}
+.insight .insight-icon.green{background:rgba(34,197,94,0.12);}
+.insight .insight-icon.blue{background:rgba(59,130,246,0.12);}
+.insight h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;}
+.insight p{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;}
+.insight .impact{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:8px;}
+.insight .impact.high{background:rgba(239,68,68,0.15);color:#ef4444;}
+.insight .impact.med{background:rgba(234,179,8,0.15);color:#eab308;}
+.insight .impact.low{background:rgba(34,197,94,0.15);color:#22c55e;}
+
+/* FORECAST TABLE */
+.forecast-bar{display:flex;height:120px;align-items:flex-end;gap:4px;margin:20px 0 8px;}
+.forecast-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.forecast-col .fc-bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height 0.5s;}
+.forecast-col .fc-label{font-size:10px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:4px;}
+.forecast-col .fc-val{font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;}
+
+/* DISCLAIMER */
+.disclaimer{font-size:11px;color:rgba(255,255,255,0.2);margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.04);line-height:1.6;}
+
+/* WATERMARK */
+.watermark{position:fixed;bottom:16px;right:24px;font-size:10px;color:rgba(255,255,255,0.08);font-weight:700;letter-spacing:2px;text-transform:uppercase;z-index:50;}
+
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .two-col,.three-col{grid-template-columns:1fr;}
+  nav{padding:0 12px;flex-wrap:wrap;}
+  .nav-brand{margin-right:auto;width:100%;padding:12px 0 4px;}
+  .nav-tabs{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .nav-date{display:none;}
+  .page{padding:16px;max-width:100%;overflow-x:hidden;}
+  .nav-tab{padding:12px 14px;font-size:11px;white-space:nowrap;}
+  .page-header h1{font-size:22px;}
+  table{font-size:12px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
+  table th,table td{padding:8px 10px;white-space:nowrap;}
+  .card{padding:16px;overflow:hidden;}
+  .kpi{padding:16px;}
+  .kpi .kpi-value{font-size:24px;}
+  .login-box{width:90%;padding:32px 24px;}
+}
+@media(max-width:600px){
+  .kpi-row{grid-template-columns:1fr;}
+  .three-col{grid-template-columns:1fr;}
+  .season-grid{grid-template-columns:1fr 1fr !important;}
+  .page{padding:10px;}
+  .card{padding:12px;}
+  .card h3{font-size:14px;}
+  .card .card-sub{font-size:10px;margin-bottom:12px;}
+  .kpi .kpi-value{font-size:20px;}
+  .kpi .kpi-sub{font-size:10px;}
+  .kpi .kpi-label{font-size:9px;}
+  .kpi{padding:12px;}
+  .page-header h1{font-size:20px;}
+  .page-header p{font-size:12px;}
+  table{font-size:11px;}
+  table th{font-size:9px;padding:6px 8px;}
+  table td{padding:6px 8px;font-size:11px;white-space:normal;word-break:break-word;}
+  table .num{font-size:11px;}
+  table .section-head td{font-size:10px;padding-top:14px;}
+  table .indent td:first-child{padding-left:16px;}
+  table .total td{font-size:12px;}
+  .score-row{flex-wrap:wrap;}
+  .score-label{width:100%;font-size:11px;margin-bottom:2px;}
+  .bar-label{width:40px;font-size:10px;}
+  .bar-amount{width:60px;font-size:10px;}
+  .insight{flex-direction:column;gap:12px;}
+  .insight h4{font-size:13px;}
+  .insight p{font-size:12px;}
+  .insight .insight-icon{width:36px;height:36px;font-size:18px;}
+  .rec-card h4{font-size:13px;}
+  .rec-card p{font-size:12px;}
+  .force-item{flex-direction:column;gap:8px;}
+  .comp-name{width:100px;font-size:11px;}
+  .disclaimer{font-size:9px;}
+  .watermark{font-size:8px;}
+  .nav-brand{font-size:11px;letter-spacing:2px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">Fair Haven Community Baseball</div>
+    <h2>Financial Dashboard</h2>
+    <p>Board-level access required</p>
+    <input type="password" id="pwd" placeholder="Enter password" autocomplete="off">
+    <button onclick="tryLogin()">Access Dashboard</button>
+    <div class="login-error" id="login-error">Invalid password. Try again.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+<nav>
+  <div class="nav-brand">FHCB Finance</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('ceo',this)">Summary</div>
+    <div class="nav-tab" onclick="showPage('snapshot',this)">Financials</div>
+    <div class="nav-tab" onclick="showPage('seasonal',this)">Seasonal Trends</div>
+    <div class="nav-tab" onclick="showPage('forecast',this)">2026 Forecast</div>
+    <div class="nav-tab" onclick="showPage('insights',this)">Insights</div>
+  </div>
+  <div class="nav-date">Data through Feb 28, 2026 · Confidential</div>
+</nav>
+
+<!-- ========== PAGE 0: CEO SUMMARY ========== -->
+<div class="page active" id="page-ceo">
+  <div class="page-header">
+    <h1>Executive Summary</h1>
+    <p>Fair Haven Community Baseball Inc. · As of March 25, 2026</p>
+  </div>
+
+  <!-- BIG 3 -->
+  <div class="three-col" style="margin-bottom:32px;">
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.03));border:1px solid rgba(34,197,94,0.2);border-radius:16px;padding:32px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:rgba(34,197,94,0.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Cash on Hand</div>
+      <div style="font-size:48px;font-weight:900;color:#22c55e;letter-spacing:-2px;">$93K</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px;">TD Bank $90,127 + Venmo $2,986</div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(34,197,94,0.15);">
+        <div style="font-size:24px;font-weight:800;color:#22c55e;">+660%</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">vs Jan 2024 ($12K)</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(59,130,246,0.03));border:1px solid rgba(59,130,246,0.2);border-radius:16px;padding:32px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:rgba(59,130,246,0.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">YTD Revenue</div>
+      <div style="font-size:48px;font-weight:900;color:#60a5fa;letter-spacing:-2px;">$70K</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px;">Registration + Sponsorships + Fundraising</div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(59,130,246,0.15);">
+        <div style="font-size:24px;font-weight:800;color:#60a5fa;">+15%</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">vs same period last year</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.03));border:1px solid rgba(245,158,11,0.2);border-radius:16px;padding:32px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:rgba(245,158,11,0.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Cooperstown Liability</div>
+      <div style="font-size:48px;font-weight:900;color:#f59e0b;letter-spacing:-2px;">$3.7K</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px;">Restricted funds owed to 12U trip</div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(245,158,11,0.15);">
+        <div style="font-size:24px;font-weight:800;color:#f59e0b;">$5.9K raised</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">$2.1K paid as prizes = $3.7K net</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHERE THE MONEY COMES FROM -->
+  <div class="two-col" style="margin-bottom:24px;">
+    <div class="card">
+      <h3>Where Revenue Comes From</h3>
+      <div class="card-sub">YTD 2026 — $70K total</div>
+      <div style="margin:16px 0;">
+        <div style="display:flex;align-items:center;margin:10px 0;">
+          <div style="width:140px;font-size:13px;color:rgba(255,255,255,0.5);">Registration</div>
+          <div style="flex:1;height:32px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;">
+            <div style="width:86%;height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:6px;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;color:#fff;">$60,338</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;margin:10px 0;">
+          <div style="width:140px;font-size:13px;color:rgba(255,255,255,0.5);">Sponsorships</div>
+          <div style="flex:1;height:32px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;">
+            <div style="width:3.5%;height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:6px;min-width:60px;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;color:#fff;">$2,440</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;margin:10px 0;">
+          <div style="width:140px;font-size:13px;color:rgba(255,255,255,0.5);">Fundraising 🏈🏀</div>
+          <div style="flex:1;height:32px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;">
+            <div style="width:7%;height:100%;background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:6px;min-width:60px;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;color:#fff;">$4,911</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;margin:10px 0;">
+          <div style="width:140px;font-size:13px;color:rgba(255,255,255,0.5);">Merch & Clinics</div>
+          <div style="flex:1;height:32px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;">
+            <div style="width:1.5%;height:100%;background:linear-gradient(90deg,#a855f7,#7c3aed);border-radius:6px;min-width:60px;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;color:#fff;">$1,038</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;margin:10px 0;">
+          <div style="width:140px;font-size:13px;color:rgba(255,255,255,0.5);">Other</div>
+          <div style="flex:1;height:32px;background:rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;">
+            <div style="width:2%;height:100%;background:linear-gradient(90deg,#6b7280,#4b5563);border-radius:6px;min-width:60px;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;color:#fff;">$1,229</div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.25);margin-top:8px;">86% of revenue from registration. Sponsorships and fundraising are new growth areas.</p>
+    </div>
+
+    <div class="card">
+      <h3>Registration Growth — 3 Year Trend</h3>
+      <div class="card-sub">January-February collections (primary revenue driver)</div>
+      <div style="display:flex;height:200px;align-items:flex-end;gap:12px;padding:20px 10px 0;justify-content:center;">
+        <div style="text-align:center;flex:1;max-width:100px;">
+          <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);margin-bottom:8px;">$46K</div>
+          <div style="width:100%;height:120px;background:linear-gradient(180deg,rgba(59,130,246,0.3),rgba(59,130,246,0.1));border-radius:8px 8px 0 0;border:1px solid rgba(59,130,246,0.2);"></div>
+          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.4);margin-top:8px;">2024</div>
+        </div>
+        <div style="text-align:center;flex:1;max-width:100px;">
+          <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:8px;">$48K</div>
+          <div style="width:100%;height:134px;background:linear-gradient(180deg,rgba(59,130,246,0.5),rgba(59,130,246,0.2));border-radius:8px 8px 0 0;border:1px solid rgba(59,130,246,0.3);"></div>
+          <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);margin-top:8px;">2025</div>
+        </div>
+        <div style="text-align:center;flex:1;max-width:100px;">
+          <div style="font-size:14px;font-weight:800;color:#60a5fa;margin-bottom:8px;">$56K</div>
+          <div style="width:100%;height:170px;background:linear-gradient(180deg,#3b82f6,#2563eb);border-radius:8px 8px 0 0;box-shadow:0 0 20px rgba(59,130,246,0.3);"></div>
+          <div style="font-size:13px;font-weight:700;color:#60a5fa;margin-top:8px;">2026</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:16px;">
+        <span style="font-size:24px;font-weight:800;color:#22c55e;">+11% CAGR</span>
+        <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px;">Consistent year-over-year growth in participation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASH RUNWAY -->
+  <div class="card" style="margin-bottom:24px;">
+    <h3>Cash Runway & Seasonality</h3>
+    <div class="card-sub">How the operating cycle works — and why the org is in strong shape</div>
+    <div class="kpi-row season-grid" style="margin:24px 0 16px;grid-template-columns:repeat(4,1fr);">
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.04));padding:20px;border-radius:12px;border:1px solid rgba(34,197,94,0.15);text-align:center;">
+        <div style="font-size:28px;">💰</div>
+        <div style="font-size:13px;font-weight:700;color:#22c55e;margin:8px 0 4px;">JAN-FEB</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">Registration floods in</div>
+        <div style="font-size:20px;font-weight:800;color:#22c55e;margin-top:8px;">+$55K</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.04));padding:20px;border-radius:12px;border:1px solid rgba(59,130,246,0.15);text-align:center;">
+        <div style="font-size:28px;">🔧</div>
+        <div style="font-size:13px;font-weight:700;color:#60a5fa;margin:8px 0 4px;">MAR</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">Pre-season prep</div>
+        <div style="font-size:20px;font-weight:800;color:#60a5fa;margin-top:8px;">-$1K</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.04));padding:20px;border-radius:12px;border:1px solid rgba(239,68,68,0.15);text-align:center;">
+        <div style="font-size:28px;">💸</div>
+        <div style="font-size:13px;font-weight:700;color:#ef4444;margin:8px 0 4px;">APR-MAY</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">Uniforms + League Dues</div>
+        <div style="font-size:20px;font-weight:800;color:#ef4444;margin-top:8px;">-$30K</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <div style="font-size:28px;">⚾</div>
+        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);margin:8px 0 4px;">JUN-DEC</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">Season play + offseason</div>
+        <div style="font-size:20px;font-weight:800;color:rgba(255,255,255,0.5);margin-top:8px;">-$12K</div>
+      </div>
+    </div>
+    <div class="three-col" style="margin-top:16px;">
+      <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Cash Runway</div>
+        <div style="font-size:28px;font-weight:800;color:#fff;">23+ months</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">at current expense rate</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Projected Low Point</div>
+        <div style="font-size:28px;font-weight:800;color:#fff;">~$52K</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">December 2026</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Interest Lost</div>
+        <div style="font-size:28px;font-weight:800;color:#ef4444;">$3.6K/yr</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">0% APY on idle cash</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP 3 ACTIONS -->
+  <div class="card">
+    <h3>Top 3 Actions for the Board</h3>
+    <div class="card-sub">Ranked by financial impact</div>
+    <div class="three-col" style="margin-top:16px;">
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🏦</div>
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">Open a Savings Account</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.5;margin-bottom:12px;">$90K+ earning 0% interest. A high-yield business savings at 4% APY = free money.</div>
+        <div style="background:rgba(34,197,94,0.15);color:#22c55e;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block;">+$3,600/year</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">👕</div>
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">Bid Out Uniforms</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.5;margin-bottom:12px;">Athletes Alley has gotten $37K over 2 years. Get 3 competing quotes before the April order.</div>
+        <div style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block;">Save $1.5-2.5K/year</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.15);border-radius:12px;padding:24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🏢</div>
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">Scale Sponsorships</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.5;margin-bottom:12px;">Already $2,440 from 5 sponsors in Q1. A formal program with pricing tiers could double this.</div>
+        <div style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block;">+$3-8K/year</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEALTH SCORE -->
+  <div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.15);border-radius:16px;padding:32px;text-align:center;margin-top:24px;">
+    <div style="font-size:11px;font-weight:700;color:rgba(34,197,94,0.5);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;">Overall Financial Health</div>
+    <div style="font-size:64px;font-weight:900;color:#22c55e;letter-spacing:-2px;">STRONG</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.4);margin-top:8px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.6;">
+      23+ months of cash runway. Revenue growing 11% annually. No debt. The program is well-run and accumulating surplus. Primary opportunities are earning interest on idle cash and diversifying revenue beyond registration.
+    </div>
+  </div>
+
+  <div class="disclaimer">Prepared for board-level review · Data through March 25, 2026 · TD Bank + Venmo reconciled · Confidential</div>
+</div>
+
+<!-- ========== PAGE 1: SNAPSHOT ========== -->
+<div class="page" id="page-snapshot">
+  <div class="page-header">
+    <h1>Financial Snapshot</h1>
+    <p>As of March 1, 2026 · Fair Haven Community Baseball Inc.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi accent">
+      <div class="kpi-label">Cash Position (as of 3/25)</div>
+      <div class="kpi-value">$90,127</div>
+      <div class="kpi-sub up">TD Bank: $90,127 + Venmo: ~$2,986</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">YTD Total Revenue (Q1 '26)</div>
+      <div class="kpi-value">$68,147</div>
+      <div class="kpi-sub up">Registration + Sponsorships + Fundraising + Merch</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">YTD Total Expenses</div>
+      <div class="kpi-value">$14,748</div>
+      <div class="kpi-sub neutral">Incl. prizes, events, custom prints, check</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">YTD Net Surplus</div>
+      <div class="kpi-value">$53,399</div>
+      <div class="kpi-sub up">▲ 78.4% margin</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- BALANCE SHEET -->
+    <div class="card">
+      <h3>Balance Sheet</h3>
+      <div class="card-sub">As of March 25, 2026 (reconciled across TD Bank + Venmo)</div>
+      <table>
+        <thead><tr><th>Item</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr class="section-head"><td colspan="2">Assets</td></tr>
+          <tr class="indent"><td>TD Bank Checking (****4426)</td><td class="num">$90,127.45</td></tr>
+          <tr class="indent"><td>Venmo Balance (@FHbaseball)</td><td class="num">$2,986.00</td></tr>
+          <tr class="total"><td>Total Assets</td><td class="num">$93,113.45</td></tr>
+
+          <tr class="section-head"><td colspan="2">Liabilities</td></tr>
+          <tr class="indent"><td>Accounts Payable</td><td class="num">$0.00</td></tr>
+          <tr><td colspan="2" style="padding-top:12px;font-weight:700;color:#f59e0b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">12U Cooperstown — Restricted Fund Liability</td></tr>
+          <tr class="indent"><td>&nbsp;&nbsp;Funds Raised (SB Pool, Brackets, Merch, Clinics)</td><td class="num">$5,858.51</td></tr>
+          <tr class="indent"><td>&nbsp;&nbsp;Less: Prizes Paid Out (SB Pool winners)</td><td class="num negative">($2,125.00)</td></tr>
+          <tr class="subtotal"><td>&nbsp;&nbsp;<strong>Owed to 12U Cooperstown</strong></td><td class="num" style="color:#f59e0b;"><strong>$3,733.51</strong></td></tr>
+          <tr><td colspan="2" style="font-size:11px;color:rgba(255,255,255,0.25);padding:4px 16px;">Restricted funds raised for the 12U Cooperstown trip. March Madness prizes TBD — will reduce this balance once paid.</td></tr>
+          <tr class="total"><td>Total Liabilities</td><td class="num">$3,733.51</td></tr>
+
+          <tr class="section-head"><td colspan="2">Net Assets</td></tr>
+          <tr class="indent"><td>Unrestricted Net Assets</td><td class="num">$89,379.94</td></tr>
+          <tr class="total"><td>Total Net Assets</td><td class="num">$89,379.94</td></tr>
+          <tr class="total"><td>Total Liabilities + Net Assets</td><td class="num">$93,113.45</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:12px;">Note: TD Bank balance as of 3/25/26. Venmo balance as of 3/27/26. Cooperstown liability represents restricted funds owed to the 12U trip program.</p>
+    </div>
+
+    <!-- INCOME STATEMENT -->
+    <div class="card">
+      <h3>Income Statement</h3>
+      <div class="card-sub">Year-to-Date: January 1 – March 25, 2026 (TD Bank + Venmo reconciled)</div>
+      <table>
+        <thead><tr><th>Line Item</th><th class="num">YTD 2026</th><th class="num">Full Year 2025</th></tr></thead>
+        <tbody>
+          <tr class="section-head"><td colspan="3">Revenue — Registration</td></tr>
+          <tr class="indent"><td>Spring Registration (TeamSnap)</td><td class="num">$60,338</td><td class="num">$57,140</td></tr>
+
+          <tr class="section-head"><td colspan="3">Revenue — Fundraising (General Fund)</td></tr>
+          <tr class="indent"><td>🎰 Survivor Pool / Knockout Pool</td><td class="num">$90</td><td class="num">—</td></tr>
+          <tr class="indent"><td>🪧 Banner Fundraising (A. Schlisman)</td><td class="num">$990</td><td class="num">—</td></tr>
+
+          <tr class="section-head"><td colspan="3">Revenue — Sponsorships (Unrestricted)</td></tr>
+          <tr class="indent"><td>Carol Lang Interiors — Banner</td><td class="num">$650</td><td class="num">—</td></tr>
+          <tr class="indent"><td>Kate Raftery — Team Sponsorship (2 teams)</td><td class="num">$400</td><td class="num">—</td></tr>
+          <tr class="indent"><td>Evolving Minds — Jersey Sponsorship</td><td class="num">$200</td><td class="num">—</td></tr>
+          <tr class="indent"><td>Stay Well Collective — T-Shirt Sponsorship</td><td class="num">$200</td><td class="num">—</td></tr>
+
+          <tr class="section-head"><td colspan="3">Revenue — Other</td></tr>
+          <tr class="indent"><td>📦 SidelineSwap (equipment resale pass-through)</td><td class="num">$259</td><td class="num">—</td></tr>
+          <tr class="indent"><td>Mobile Deposits (checks/cash — March)</td><td class="num">$950</td><td class="num">—</td></tr>
+
+          <tr class="subtotal"><td>Total Unrestricted Revenue</td><td class="num" style="color:#22c55e;font-size:15px;">$64,097</td><td class="num">$60,732</td></tr>
+
+          <tr class="section-head"><td colspan="3" style="color:#f59e0b !important;">Revenue — Restricted (12U Cooperstown Fund via Venmo)</td></tr>
+          <tr class="indent"><td>🏈 Super Bowl Box Pool (gross collections)</td><td class="num">$4,201</td><td class="num">—</td></tr>
+          <tr class="indent"><td>🏀 March Madness Brackets</td><td class="num">$620</td><td class="num">—</td></tr>
+          <tr class="indent"><td>🩴 Cooperstown Slides ($48/pair × 15+)</td><td class="num">$720</td><td class="num">—</td></tr>
+          <tr class="indent"><td>🧲 Magnets, Stickers, Blankets</td><td class="num">$198</td><td class="num">—</td></tr>
+          <tr class="indent"><td>⚾ Baseball Clinics (2 kids × $60)</td><td class="num">$120</td><td class="num">—</td></tr>
+          <tr class="subtotal"><td>Total Restricted Revenue (Cooperstown)</td><td class="num" style="color:#f59e0b;">$5,859</td><td class="num">—</td></tr>
+
+          <tr class="total"><td>Total All Revenue</td><td class="num" style="color:#22c55e;font-size:16px;">$69,956</td><td class="num">$60,732</td></tr>
+
+          <tr class="section-head"><td colspan="3">Expenses — Operations (Unrestricted)</td></tr>
+          <tr class="indent"><td>Technology (TeamSnap + SurveyMonkey)</td><td class="num">$1,546</td><td class="num">$3,170</td></tr>
+          <tr class="indent"><td>Food & Events (The Cellar + Val's Tavern Mar)</td><td class="num">$1,306</td><td class="num">$1,581</td></tr>
+          <tr class="indent"><td>Custom Prints (OTCheap — banners/signage)</td><td class="num">$721</td><td class="num">—</td></tr>
+          <tr class="indent"><td>Check #995027 (payee TBD)</td><td class="num">$2,154</td><td class="num">—</td></tr>
+          <tr class="indent"><td>TeamSnap Refund Debits</td><td class="num">$887</td><td class="num">—</td></tr>
+          <tr class="indent"><td>Office Supplies (Staples, Evite)</td><td class="num">$78</td><td class="num">$623</td></tr>
+          <tr class="indent"><td>Uniforms & Equipment</td><td class="num">$0</td><td class="num">$16,482</td></tr>
+          <tr class="indent"><td>League Dues</td><td class="num">$0</td><td class="num">$13,068</td></tr>
+          <tr class="indent"><td>Umpires & Game Staff</td><td class="num">$0</td><td class="num">$8,724</td></tr>
+          <tr class="indent"><td>Field & Facilities</td><td class="num">$0</td><td class="num">$3,629</td></tr>
+
+          <tr class="section-head"><td colspan="3">Expenses — Unrestricted Payouts (Venmo)</td></tr>
+          <tr class="indent"><td>🎰 Survivor Pool Payout (J. Cullen)</td><td class="num">$1,260</td><td class="num">—</td></tr>
+          <tr class="indent"><td>📦 SidelineSwap Pass-Through (C. Eberhard)</td><td class="num">$259</td><td class="num">—</td></tr>
+          <tr class="indent"><td>7U Clinic T-Shirts (B. Biegen)</td><td class="num">$960</td><td class="num">—</td></tr>
+
+          <tr class="section-head"><td colspan="3" style="color:#f59e0b !important;">Expenses — 12U Cooperstown Prizes (from restricted pool)</td></tr>
+          <tr class="indent"><td>🏈 SB Pool Prize — 1st Half (S. Wenzel)</td><td class="num">$750</td><td class="num">—</td></tr>
+          <tr class="indent"><td>🏈 SB Pool Prize — 3rd Qtr (F. Morganti)</td><td class="num">$375</td><td class="num">—</td></tr>
+          <tr class="indent"><td>🏈 SB Pool Prize — Final (K. Bell)</td><td class="num">$1,000</td><td class="num">—</td></tr>
+          <tr class="subtotal"><td>Total Cooperstown Prizes Paid</td><td class="num" style="color:#f59e0b;">$2,125</td><td class="num">—</td></tr>
+
+          <tr class="subtotal"><td>Total All Expenses</td><td class="num" style="color:#ef4444;font-size:16px;">$11,296</td><td class="num">$48,122</td></tr>
+
+          <tr class="total"><td>Net Surplus / (Deficit) — All Funds</td><td class="num positive" style="font-size:18px;">$58,660</td><td class="num positive">$12,610</td></tr>
+
+          <tr style="background:rgba(245,158,11,0.05);"><td colspan="3" style="padding:16px;font-size:13px;line-height:1.6;">
+            <strong style="color:#f59e0b;">📊 12U Cooperstown Fund — Outstanding Liability:</strong><br>
+            <span style="color:rgba(255,255,255,0.5);">
+            Total Raised (2026): <strong style="color:#22c55e;">$5,859</strong> (SB Pool $4,201 + Brackets $620 + Merch $918 + Clinics $120)<br>
+            Prizes Paid Out: <strong style="color:#ef4444;">($2,125)</strong> (SB Pool winners)<br>
+            <strong style="color:#f59e0b;">Outstanding Liability to 12U Cooperstown: $3,734</strong><br>
+            <em>This amount is owed to the 12U Cooperstown trip fund. March Madness prizes still TBD — once paid, liability decreases. Note: 2025 Venmo activity not available, so prior Cooperstown inflows/outflows are excluded.</em>
+            </span>
+          </td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:12px;">Note: YTD 2026 reconciles TD Bank and Venmo to show true revenue sources. Venmo cashout transfers to TD Bank are excluded to avoid double-counting — they are internal movements, not revenue. Revenue is categorized by its actual source (registration, sponsorship, fundraiser, merchandise, clinics). Full Year 2025 is TD Bank only (Venmo data not available for 2025).</p>
+    </div>
+  </div>
+
+  <!-- CASH FLOW STATEMENT -->
+  <div class="card">
+    <h3>Statement of Cash Flows</h3>
+    <div class="card-sub">For the year ended December 31, 2025</div>
+    <table>
+      <thead><tr><th>Category</th><th class="num">2025</th><th class="num">2024</th></tr></thead>
+      <tbody>
+        <tr class="section-head"><td colspan="3">Operating Activities</td></tr>
+        <tr class="indent"><td>Registration & Program Revenue Received</td><td class="num">$60,732</td><td class="num">$83,117</td></tr>
+        <tr class="indent"><td>Payments for Uniforms & Equipment</td><td class="num">($17,130)</td><td class="num">($21,423)</td></tr>
+        <tr class="indent"><td>League Dues Paid</td><td class="num">($13,068)</td><td class="num">($10,292)</td></tr>
+        <tr class="indent"><td>Umpire & Staff Payments</td><td class="num">($8,724)</td><td class="num">($16,268)</td></tr>
+        <tr class="indent"><td>Technology & Admin Expenses</td><td class="num">($3,793)</td><td class="num">($2,383)</td></tr>
+        <tr class="indent"><td>Field Maintenance & Facilities</td><td class="num">($3,629)</td><td class="num">($2,967)</td></tr>
+        <tr class="indent"><td>Food, Events & Other</td><td class="num">($1,778)</td><td class="num">($1,565)</td></tr>
+        <tr class="subtotal"><td>Net Cash from Operations</td><td class="num positive">$12,610</td><td class="num positive">$28,219</td></tr>
+
+        <tr class="section-head"><td colspan="3">Investing Activities</td></tr>
+        <tr class="indent"><td>Equipment Purchases (A/V)</td><td class="num">($950)</td><td class="num">$0</td></tr>
+        <tr class="subtotal"><td>Net Cash from Investing</td><td class="num negative">($950)</td><td class="num">$0</td></tr>
+
+        <tr class="section-head"><td colspan="3">Financing Activities</td></tr>
+        <tr class="indent"><td>No debt or equity activity</td><td class="num">$0</td><td class="num">$0</td></tr>
+
+        <tr class="total"><td>Net Change in Cash</td><td class="num positive">$12,016</td><td class="num positive">$12,192</td></tr>
+        <tr><td>Beginning Cash</td><td class="num">$24,179</td><td class="num">$11,987</td></tr>
+        <tr class="total"><td>Ending Cash</td><td class="num">$36,195</td><td class="num">$24,179</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="disclaimer">This financial snapshot is prepared from bank statement data only. It may not capture credit card transactions, petty cash, or off-book items. Equipment values are estimated. Prepared for board-level review — not audited.</div>
+</div>
+
+<!-- ========== PAGE 2: SEASONAL TRENDS ========== -->
+<div class="page" id="page-seasonal">
+  <div class="page-header">
+    <h1>Seasonal Trends</h1>
+    <p>Quarterly patterns across 2024–2025 operating years</p>
+  </div>
+
+  <!-- QUARTERLY SUMMARY -->
+  <div class="card">
+    <h3>Quarterly Revenue vs Expenses</h3>
+    <div class="card-sub">Fiscal year aligned to calendar quarters</div>
+    <table>
+      <thead><tr><th>Quarter</th><th class="num">Rev 2024</th><th class="num">Exp 2024</th><th class="num">Net 2024</th><th class="num">Rev 2025</th><th class="num">Exp 2025</th><th class="num">Net 2025</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Q1</strong> (Jan-Mar)</td><td class="num">$49,148</td><td class="num">$7,124</td><td class="num positive">+$42,024</td><td class="num">$52,025</td><td class="num">$7,623</td><td class="num positive">+$44,402</td></tr>
+        <tr><td><strong>Q2</strong> (Apr-Jun)</td><td class="num">$19,176</td><td class="num">$48,716</td><td class="num negative">-$29,540</td><td class="num">$5,117</td><td class="num">$32,971</td><td class="num negative">-$27,854</td></tr>
+        <tr><td><strong>Q3</strong> (Jul-Sep)</td><td class="num">$10,315</td><td class="num">$10,798</td><td class="num negative">-$483</td><td class="num">$4,440</td><td class="num">$1,711</td><td class="num positive">+$2,729</td></tr>
+        <tr><td><strong>Q4</strong> (Oct-Dec)</td><td class="num">$6,532</td><td class="num">$7,306</td><td class="num negative">-$774</td><td class="num">$1,080</td><td class="num">$8,342</td><td class="num negative">-$7,262</td></tr>
+        <tr class="total"><td>Full Year</td><td class="num">$85,171</td><td class="num">$73,944</td><td class="num positive">+$11,227</td><td class="num">$62,662</td><td class="num">$50,647</td><td class="num positive">+$12,015</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <!-- REVENUE SEASONALITY -->
+    <div class="card">
+      <h3>Revenue by Quarter (Avg)</h3>
+      <div class="card-sub">Shows when money comes in</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">Q1</div>
+          <div class="bar-track"><div class="bar-fill revenue" style="width:92%;">Q1</div></div>
+          <div class="bar-amount">~$50K</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Q2</div>
+          <div class="bar-track"><div class="bar-fill revenue" style="width:22%;">Q2</div></div>
+          <div class="bar-amount">~$12K</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Q3</div>
+          <div class="bar-track"><div class="bar-fill revenue" style="width:14%;">Q3</div></div>
+          <div class="bar-amount">~$7K</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Q4</div>
+          <div class="bar-track"><div class="bar-fill revenue" style="width:7%;">Q4</div></div>
+          <div class="bar-amount">~$4K</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:12px;">⚡ ~68% of annual revenue arrives in Q1 (Jan-Feb registration)</p>
+    </div>
+
+    <!-- EXPENSE SEASONALITY -->
+    <div class="card">
+      <h3>Expenses by Quarter (Avg)</h3>
+      <div class="card-sub">Shows when money goes out</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">Q1</div>
+          <div class="bar-track"><div class="bar-fill expense" style="width:18%;">Q1</div></div>
+          <div class="bar-amount">~$7K</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Q2</div>
+          <div class="bar-track"><div class="bar-fill expense" style="width:100%;">Q2</div></div>
+          <div class="bar-amount">~$41K</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Q3</div>
+          <div class="bar-track"><div class="bar-fill expense" style="width:15%;">Q3</div></div>
+          <div class="bar-amount">~$6K</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Q4</div>
+          <div class="bar-track"><div class="bar-fill expense" style="width:19%;">Q4</div></div>
+          <div class="bar-amount">~$8K</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:12px;">💸 ~66% of annual spend concentrated in Q2 (uniforms + league dues)</p>
+    </div>
+  </div>
+
+  <!-- NET CASH FLOW BY QUARTER -->
+  <div class="card">
+    <h3>Net Cash Flow by Quarter</h3>
+    <div class="card-sub">Cash surplus or deficit each quarter</div>
+    <div class="bar-chart">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <p style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);margin-bottom:8px;">2024</p>
+          <div class="bar-row"><div class="bar-label">Q1</div><div class="bar-track"><div class="bar-fill net-pos" style="width:85%;">+$42K</div></div></div>
+          <div class="bar-row"><div class="bar-label">Q2</div><div class="bar-track"><div class="bar-fill net-neg" style="width:60%;">-$30K</div></div></div>
+          <div class="bar-row"><div class="bar-label">Q3</div><div class="bar-track"><div class="bar-fill net-neg" style="width:3%;min-width:40px;">-$0.5K</div></div></div>
+          <div class="bar-row"><div class="bar-label">Q4</div><div class="bar-track"><div class="bar-fill net-neg" style="width:4%;min-width:40px;">-$0.8K</div></div></div>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);margin-bottom:8px;">2025</p>
+          <div class="bar-row"><div class="bar-label">Q1</div><div class="bar-track"><div class="bar-fill net-pos" style="width:90%;">+$44K</div></div></div>
+          <div class="bar-row"><div class="bar-label">Q2</div><div class="bar-track"><div class="bar-fill net-neg" style="width:56%;">-$28K</div></div></div>
+          <div class="bar-row"><div class="bar-label">Q3</div><div class="bar-track"><div class="bar-fill net-pos" style="width:8%;">+$2.7K</div></div></div>
+          <div class="bar-row"><div class="bar-label">Q4</div><div class="bar-track"><div class="bar-fill net-neg" style="width:16%;">-$7.3K</div></div></div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:16px;line-height:1.6;">
+      <strong style="color:rgba(255,255,255,0.5);">The pattern is structural:</strong> Q1 generates all the surplus. Q2 consumes it for season launch (uniforms + league dues). Q3-Q4 are roughly break-even to slightly negative. The organization's financial health is determined entirely by January and February registration performance.
+    </p>
+  </div>
+
+  <!-- REGISTRATION TREND -->
+  <div class="card">
+    <h3>3-Year Registration Revenue Trend</h3>
+    <div class="card-sub">January-February registration collections (primary revenue driver)</div>
+    <div class="bar-chart">
+      <div class="bar-row">
+        <div class="bar-label">2024</div>
+        <div class="bar-track"><div class="bar-fill cash" style="width:76%;">$45,846</div></div>
+        <div class="bar-amount">Baseline</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">2025</div>
+        <div class="bar-track"><div class="bar-fill cash" style="width:83%;">$47,740</div></div>
+        <div class="bar-amount" style="color:#22c55e;">+4.1%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">2026</div>
+        <div class="bar-track"><div class="bar-fill cash" style="width:98%;">$56,464</div></div>
+        <div class="bar-amount" style="color:#22c55e;">+18.3%</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#22c55e;margin-top:12px;font-weight:600;">📈 3-year CAGR: +11.0% — Strong, consistent growth in program participation</p>
+  </div>
+</div>
+
+<!-- ========== PAGE 3: 2026 FORECAST ========== -->
+<div class="page" id="page-forecast">
+  <div class="page-header">
+    <h1>2026 Cash Flow Forecast</h1>
+    <p>Monthly projected cash position based on 2-year historical patterns</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi accent">
+      <div class="kpi-label">Projected Year-End Cash</div>
+      <div class="kpi-value">$63,349</div>
+      <div class="kpi-sub up">▲ +75% vs Dec '25 ($36,195)</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Projected Full-Year Revenue</div>
+      <div class="kpi-value">$73,464</div>
+      <div class="kpi-sub up">▲ +21% vs 2025</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Projected Full-Year Expenses</div>
+      <div class="kpi-value">$55,164</div>
+      <div class="kpi-sub neutral">Based on 2-year averages + inflation</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Projected Surplus</div>
+      <div class="kpi-value">$18,300</div>
+      <div class="kpi-sub up">24.9% margin</div>
+    </div>
+  </div>
+
+  <!-- MONTHLY FORECAST TABLE -->
+  <div class="card">
+    <h3>Monthly Forecast — 2026</h3>
+    <div class="card-sub">Actuals (Jan-Feb) + Projected (Mar-Dec) based on historical patterns</div>
+    <table>
+      <thead><tr><th>Month</th><th class="num">Revenue</th><th class="num">Expenses</th><th class="num">Net</th><th class="num">Cash Balance</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr style="background:rgba(59,130,246,0.05);"><td><strong>Jan</strong> ✓</td><td class="num">$34,927</td><td class="num">$99</td><td class="num positive">+$34,828</td><td class="num" style="color:#60a5fa;">$71,022</td><td style="font-size:11px;color:#3b82f6;">ACTUAL</td></tr>
+        <tr style="background:rgba(59,130,246,0.05);"><td><strong>Feb</strong> ✓</td><td class="num">$21,537</td><td class="num">$1,511</td><td class="num positive">+$20,027</td><td class="num" style="color:#60a5fa;">$91,049</td><td style="font-size:11px;color:#3b82f6;">ACTUAL</td></tr>
+        <tr><td><strong>Mar</strong></td><td class="num">$4,000</td><td class="num">$5,000</td><td class="num negative">-$1,000</td><td class="num">$90,049</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">PROJECTED</td></tr>
+        <tr style="background:rgba(239,68,68,0.03);"><td><strong>Apr</strong></td><td class="num">$3,000</td><td class="num">$19,000</td><td class="num negative">-$16,000</td><td class="num">$74,049</td><td style="font-size:11px;color:#ef4444;">⚠ UNIFORM + DUES</td></tr>
+        <tr style="background:rgba(239,68,68,0.03);"><td><strong>May</strong></td><td class="num">$1,000</td><td class="num">$14,500</td><td class="num negative">-$13,500</td><td class="num">$60,549</td><td style="font-size:11px;color:#ef4444;">⚠ LEAGUE DUES</td></tr>
+        <tr><td><strong>Jun</strong></td><td class="num">$1,000</td><td class="num">$2,000</td><td class="num negative">-$1,000</td><td class="num">$59,549</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">PROJECTED</td></tr>
+        <tr><td><strong>Jul</strong></td><td class="num">$1,500</td><td class="num">$2,000</td><td class="num negative">-$500</td><td class="num">$59,049</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">PROJECTED</td></tr>
+        <tr><td><strong>Aug</strong></td><td class="num">$1,000</td><td class="num">$2,500</td><td class="num negative">-$1,500</td><td class="num">$57,549</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">PROJECTED</td></tr>
+        <tr><td><strong>Sep</strong></td><td class="num">$4,500</td><td class="num">$3,000</td><td class="num positive">+$1,500</td><td class="num">$59,049</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">FALL REG</td></tr>
+        <tr><td><strong>Oct</strong></td><td class="num">$1,000</td><td class="num">$4,000</td><td class="num negative">-$3,000</td><td class="num">$56,049</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">PROJECTED</td></tr>
+        <tr><td><strong>Nov</strong></td><td class="num">$0</td><td class="num">$3,200</td><td class="num negative">-$3,200</td><td class="num">$52,849</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">OFF-SEASON</td></tr>
+        <tr><td><strong>Dec</strong></td><td class="num">$0</td><td class="num">$500</td><td class="num negative">-$500</td><td class="num">$52,349</td><td style="font-size:11px;color:rgba(255,255,255,0.3);">OFF-SEASON</td></tr>
+        <tr class="total"><td>Full Year 2026</td><td class="num">$73,464</td><td class="num">$57,310</td><td class="num positive">+$16,154</td><td class="num" style="color:#60a5fa;">$52,349</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CASH PROJECTION CHART -->
+  <div class="card">
+    <h3>Projected Cash Position — 2026</h3>
+    <div class="card-sub">Visual representation of monthly ending balances</div>
+    <div style="display:flex;height:200px;align-items:flex-end;gap:8px;padding:0 4px;margin:20px 0 8px;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:#60a5fa;font-weight:700;margin-bottom:4px;">$71K</div>
+        <div style="width:100%;background:linear-gradient(180deg,#3b82f6,#2563eb);border-radius:4px 4px 0 0;height:138px;"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Jan</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:#60a5fa;font-weight:700;margin-bottom:4px;">$91K</div>
+        <div style="width:100%;background:linear-gradient(180deg,#3b82f6,#2563eb);border-radius:4px 4px 0 0;height:180px;"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Feb</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$90K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:176px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Mar</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$74K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:144px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Apr</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$61K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:118px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">May</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$60K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:116px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Jun</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$59K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:114px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Jul</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$58K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:112px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Aug</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$59K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:114px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Sep</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$56K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:108px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Oct</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$53K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:102px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Nov</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);font-weight:600;margin-bottom:4px;">$52K</div>
+        <div style="width:100%;background:linear-gradient(180deg,rgba(59,130,246,0.4),rgba(37,99,235,0.4));border-radius:4px 4px 0 0;height:100px;border:1px dashed rgba(59,130,246,0.3);"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Dec</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;margin-top:12px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:#3b82f6;border-radius:2px;"></div> Actual</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;background:rgba(59,130,246,0.4);border-radius:2px;border:1px dashed rgba(59,130,246,0.5);"></div> Projected</div>
+    </div>
+  </div>
+
+  <!-- ASSUMPTIONS -->
+  <div class="card">
+    <h3>Forecast Assumptions</h3>
+    <div class="card-sub">Key inputs driving the 2026 projection</div>
+    <table>
+      <thead><tr><th>Assumption</th><th>Value</th><th>Basis</th></tr></thead>
+      <tbody>
+        <tr><td>Spring Registration</td><td>$56,464 (actual)</td><td>Jan-Feb 2026 collected</td></tr>
+        <tr><td>March Late Registration</td><td>$4,000</td><td>Avg of 2024 ($3,302) and 2025 ($4,285)</td></tr>
+        <tr><td>April-Jun Trickle</td><td>$5,000</td><td>Avg of prior years</td></tr>
+        <tr><td>Fall Registration (Sep-Oct)</td><td>$5,500</td><td>Avg of 2024 ($3,447) and 2025 ($5,340)</td></tr>
+        <tr><td>Uniform Expense</td><td>$17,500</td><td>Avg of 2024 ($20,834) + 2025 ($16,482)</td></tr>
+        <tr><td>League Dues</td><td>$14,000</td><td>2025 ($13,068) + 7% inflation</td></tr>
+        <tr><td>Umpires/Staff</td><td>$10,000</td><td>2-year average</td></tr>
+        <tr><td>All Other Expenses</td><td>$13,810</td><td>2025 actuals with minor adjustments</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== PAGE 4: INSIGHTS ========== -->
+<div class="page" id="page-insights">
+  <div class="page-header">
+    <h1>Strategic Insights</h1>
+    <p>Board-level recommendations ranked by financial impact</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi" style="border-color:rgba(239,68,68,0.3);">
+      <div class="kpi-label">Immediate Actions</div>
+      <div class="kpi-value" style="color:#ef4444;">3</div>
+      <div class="kpi-sub" style="color:#ef4444;">High priority</div>
+    </div>
+    <div class="kpi" style="border-color:rgba(234,179,8,0.3);">
+      <div class="kpi-label">This Season</div>
+      <div class="kpi-value" style="color:#eab308;">3</div>
+      <div class="kpi-sub" style="color:#eab308;">Medium priority</div>
+    </div>
+    <div class="kpi" style="border-color:rgba(34,197,94,0.3);">
+      <div class="kpi-label">Long-Term</div>
+      <div class="kpi-value" style="color:#22c55e;">4</div>
+      <div class="kpi-sub" style="color:#22c55e;">Strategic</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">Total Annual Impact</div>
+      <div class="kpi-value">$15K+</div>
+      <div class="kpi-sub up">Savings + new revenue</div>
+    </div>
+  </div>
+
+  <h3 style="color:#ef4444;font-size:13px;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">🔴 Immediate — Do This Month</h3>
+
+  <div class="insight">
+    <div class="insight-icon red">💰</div>
+    <div>
+      <h4>Open a High-Yield Business Savings Account</h4>
+      <p>$91,049 is sitting in a non-interest-bearing TD checking account. A business savings account at 4%+ APY would generate <strong>$2,600–$3,600/year in free interest</strong> — with zero effort. Keep $25K in checking for operations, sweep the rest. At projected year-end cash of $52K+, this is money left on the table every single day.</p>
+      <span class="impact high">IMPACT: +$2,600–$3,600/YEAR</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon red">📋</div>
+    <div>
+      <h4>Document All Venmo & Check Payments Immediately</h4>
+      <p>Over 26 months, $27,000+ went out via Venmo and $25,000+ via checks — with no payee information visible on bank statements. As a 501(c)(3), the IRS requires documentation of payments exceeding $600 to any individual (1099 reporting). This is a compliance risk that should be remediated before the next tax filing. Create a simple log: Date | Recipient | Amount | Purpose.</p>
+      <span class="impact high">IMPACT: COMPLIANCE RISK MITIGATION</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon red">🔍</div>
+    <div>
+      <h4>Identify Check #1190 — $15,086 (June 2024)</h4>
+      <p>This is the single largest disbursement in 26 months of data. No vendor name is visible on the bank statement. The board should confirm what this payment was for, whether it recurs, and ensure proper documentation exists. At $15K, this represents 20%+ of annual expenses.</p>
+      <span class="impact high">IMPACT: AUDIT READINESS</span>
+    </div>
+  </div>
+
+  <h3 style="color:#eab308;font-size:13px;text-transform:uppercase;letter-spacing:2px;margin:32px 0 16px;">🟡 This Season — Before April Orders</h3>
+
+  <div class="insight">
+    <div class="insight-icon yellow">👕</div>
+    <div>
+      <h4>Get 3 Competitive Bids on Uniforms Before Ordering</h4>
+      <p>Athletes Alley (Shrewsbury) has received $37,316 over 2 years — averaging $18,658/year. This is your single largest expense category. Before placing the 2026 order, solicit quotes from BSN Sports, Squad Locker, and a local screen printer. Even a 12% reduction saves $2,200+/year.</p>
+      <span class="impact med">IMPACT: SAVE $1,500–$2,500/YEAR</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon yellow">📊</div>
+    <div>
+      <h4>Cancel or Downgrade SurveyMonkey ($99/mo → $0-$25/mo)</h4>
+      <p>You've paid $1,683 for SurveyMonkey since May 2025. The organization ran the entire 2024 season without it. Google Forms provides identical survey functionality for free. If surveys are essential, SurveyMonkey Basic at $25/mo covers most needs.</p>
+      <span class="impact med">IMPACT: SAVE $888–$1,188/YEAR</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon yellow">⚾</div>
+    <div>
+      <h4>Understand the 27% League Dues Increase</h4>
+      <p>Two Rivers Little League dues jumped from $10,292 (2024) to $13,068 (2025) — a $2,776 increase. Is this driven by player count, per-player fee increases, or new assessments? Understanding the driver helps you forecast accurately and potentially negotiate.</p>
+      <span class="impact med">IMPACT: COST VISIBILITY</span>
+    </div>
+  </div>
+
+  <h3 style="color:#22c55e;font-size:13px;text-transform:uppercase;letter-spacing:2px;margin:32px 0 16px;">🟢 Strategic — Build Over 12 Months</h3>
+
+  <div class="insight">
+    <div class="insight-icon green">🏢</div>
+    <div>
+      <h4>Pursue Corporate Matching Grants — $5K–$10K Opportunity</h4>
+      <p>CyberGrants deposited $4,100 in 2024 (Jul + Oct) — corporate matching gifts from employers. This is untapped potential. Many NJ employers (J&J, Merck, Prudential, Goldman) match charitable donations to youth sports 1:1. Register on Benevity and Double the Donation. Send one email to all parents: "Does your employer match?"</p>
+      <span class="impact low">IMPACT: +$5,000–$10,000/YEAR</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon green">🎉</div>
+    <div>
+      <h4>Revive Fundraising Events</h4>
+      <p>2024 saw $18,197 flow through Venmo in June (likely event/sponsorship proceeds). This didn't repeat in 2025. A single annual event — golf outing, trivia night, home run derby — can generate $3,000–$8,000 net. The Fair Haven/Rumson community has the disposable income to support it.</p>
+      <span class="impact low">IMPACT: +$3,000–$8,000/YEAR</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon green">🏪</div>
+    <div>
+      <h4>Launch Local Business Sponsorship Program</h4>
+      <p>You're in one of NJ's most affluent communities. Local businesses want community visibility. Offer: jersey sponsors ($300–$500/team), field banner ads ($200–$500/season), scoreboard naming ($1,000+). With 12-15 teams, even modest participation generates meaningful non-registration revenue.</p>
+      <span class="impact low">IMPACT: +$3,000–$8,000/YEAR</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-icon blue">📜</div>
+    <div>
+      <h4>Establish a Formal Reserve Policy</h4>
+      <p>The board should adopt a resolution: "FHCB will maintain a minimum unrestricted operating reserve of $30,000 (~7 months of expenses)." Current cash of $91K far exceeds this. The surplus above reserve ($61K+) can be intentionally deployed for program improvement — field upgrades, equipment, scholarship fund, coaching development.</p>
+      <span class="impact low">IMPACT: GOVERNANCE BEST PRACTICE</span>
+    </div>
+  </div>
+
+  <!-- SUMMARY TABLE -->
+  <div class="card" style="margin-top:32px;">
+    <h3>Impact Summary — All Recommendations</h3>
+    <div class="card-sub">Conservative annual estimates</div>
+    <table>
+      <thead><tr><th>Action</th><th class="num">Annual Impact</th><th>Effort</th><th>Timeline</th></tr></thead>
+      <tbody>
+        <tr><td>High-yield savings account</td><td class="num positive">+$2,600–$3,600</td><td>Low (1 hour)</td><td>This week</td></tr>
+        <tr><td>Document Venmo/check payments</td><td class="num">Risk mitigation</td><td>Low (ongoing)</td><td>This week</td></tr>
+        <tr><td>Competitive bid on uniforms</td><td class="num positive">+$1,500–$2,500</td><td>Medium</td><td>Before Apr order</td></tr>
+        <tr><td>Downgrade SurveyMonkey</td><td class="num positive">+$888–$1,188</td><td>Low (10 min)</td><td>This month</td></tr>
+        <tr><td>Corporate matching grants</td><td class="num positive">+$5,000–$10,000</td><td>Medium</td><td>Q1-Q2</td></tr>
+        <tr><td>Annual fundraising event</td><td class="num positive">+$3,000–$8,000</td><td>High</td><td>Summer 2026</td></tr>
+        <tr><td>Local business sponsorships</td><td class="num positive">+$3,000–$8,000</td><td>Medium</td><td>Spring 2026</td></tr>
+        <tr class="total"><td>Total Potential Impact</td><td class="num positive">+$15,988–$33,288/yr</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="disclaimer">
+    This dashboard is prepared from 26 months of TD Bank statement data (Jan 2024 – Feb 2026). It does not constitute a formal audit or tax filing. All projections are estimates based on historical patterns and may vary based on actual registration numbers, vendor pricing, and operational decisions. Prepared for board-level strategic review. Confidential — do not distribute outside the FHCB board.<br><br>
+    Prepared by Thinky 🧠 · March 2026
+  </div>
+</div>
+
+<div class="watermark">FHCB · CONFIDENTIAL</div>
+
+<!-- CHAT AGENT -->
+<div id="chat-toggle" onclick="toggleChat()" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(59,130,246,0.4);z-index:9000;transition:transform 0.2s;">
+  <span style="font-size:24px;">💬</span>
+</div>
+
+<div id="chat-panel" style="display:none;position:fixed;bottom:24px;right:24px;width:380px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 48px);background:#1a1d2e;border:1px solid rgba(255,255,255,0.1);border-radius:16px;z-index:9001;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5);">
+  <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Ask About the Financials</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);">AI assistant with full data context</div>
+    </div>
+    <div onclick="toggleChat()" style="cursor:pointer;font-size:18px;color:rgba(255,255,255,0.3);padding:4px;">✕</div>
+  </div>
+
+  <div id="chat-setup" style="padding:20px;display:none;">
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Enter your OpenAI API key to enable the assistant. It's stored only in your browser.</div>
+    <input type="password" id="api-key-input" placeholder="sk-..." style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;margin-bottom:10px;">
+    <button onclick="saveApiKey()" style="width:100%;padding:10px;background:#3b82f6;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Save & Start</button>
+  </div>
+
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:none;">
+    <div id="msgs"></div>
+    <div id="prompt-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+    </div>
+  </div>
+
+  <div id="chat-input-area" style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);display:none;">
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="chat-input" placeholder="Ask a question..." style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;" onkeydown="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()" style="padding:10px 16px;background:#3b82f6;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Send</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const FINANCIAL_CONTEXT = `You are an AI financial assistant for Fair Haven Community Baseball Inc (FHCB), a nonprofit youth baseball organization in Fair Haven, NJ 07704. Answer questions based on this data:
+
+CASH POSITION (as of 3/25/2026):
+- TD Bank Checking: $90,127.45
+- Venmo (@FHbaseball): ~$2,986
+- Total: ~$93,113
+
+BALANCE SHEET (3/25/2026):
+- Total Assets: $93,113 (all cash)
+- Liabilities: $3,734 (restricted Cooperstown funds owed to 12U trip)
+- Unrestricted Net Assets: $89,380
+- Total L+NA: $93,113
+
+YTD 2026 REVENUE (Jan 1 - Mar 25):
+- Spring Registration (TeamSnap): $60,338
+- Sponsorships: $1,450 (Carol Lang Interiors $650 banner, Kate Raftery $400 two teams, Evolving Minds $200 jersey, Stay Well Collective $200 t-shirt)
+- General Fund Fundraising: $1,080 (Survivor/Knockout Pool $90, Banner Fundraising A. Schlisman $990)
+- Restricted Cooperstown Fundraising: $5,859 (Super Bowl Box Pool $4,201, March Madness Brackets $620, Slides $720, Magnets/Stickers/Blankets $198, Clinics $120)
+- Other: $1,209 (SidelineSwap $259, Mobile Deposits $950)
+- Total Revenue: ~$69,956
+
+YTD 2026 EXPENSES:
+- Technology: $1,546 (TeamSnap $1,249 annual + SurveyMonkey $99/mo × 3)
+- Food & Events: $1,306 (The Cellar $85, Val's Tavern $1,221)
+- Custom Prints OTCheap (banners): $721
+- Check #995027: $2,154 (payee unknown)
+- TeamSnap Refund Debits: $887
+- Office Supplies: $78 (Staples, Evite)
+- Cooperstown Prizes: $2,125 (Wenzel $750, Morganti $375, Bell $1,000)
+- Survivor Pool Payout (J. Cullen): $1,260
+- SidelineSwap pass-through (C. Eberhard): $259
+- 7U Clinic T-Shirts (B. Biegen): $960
+- Total Expenses: ~$11,296
+
+FULL YEAR 2025:
+- Revenue: $60,732 | Expenses: $48,122 | Net: $12,610
+- Biggest expenses: Uniforms (Athletes Alley) $16,482, League Dues (Two Rivers LL) $13,068, Umpires/Staff $8,724
+
+FULL YEAR 2024:
+- Revenue: $83,117 | Expenses: $69,219 | Net: $13,898
+- Biggest expenses: Uniforms $20,834, Check #1190 $15,086, League Dues $10,292
+
+REGISTRATION TREND (Jan-Feb):
+- 2024: $45,846
+- 2025: $47,740 (+4.1%)
+- 2026: $56,464 (+18.3%)
+- 3-year CAGR: +11%
+
+SEASONAL PATTERN:
+- Q1 (Jan-Mar): ~$50K revenue, ~$7K expenses = +$43K surplus
+- Q2 (Apr-Jun): ~$5-12K revenue, ~$33-49K expenses = -$28-30K (uniforms + league dues)
+- Q3 (Jul-Sep): ~$4-10K revenue, ~$2-11K expenses = roughly breakeven
+- Q4 (Oct-Dec): ~$1-7K revenue, ~$3-8K expenses = slight negative
+
+KEY VENDORS:
+- Athletes Alley (Shrewsbury NJ): Uniforms, ~$17-21K/year
+- Two Rivers Little League: League dues, ~$10-13K/year
+- SurveyMonkey: $99/month ($1,188/year)
+- TeamSnap: Registration platform ~$1,249/year
+- E.F. Mason: Field contractor ~$2,080/year
+- Val's Tavern (Rumson): Events/dinners
+- GoDaddy: Website ~$219/year
+
+COOPERSTOWN 12U FUND:
+- Raised: $5,859 (SB Pool, March Madness, Merch, Clinics)
+- Prizes Paid: $2,125
+- Net owed to Cooperstown: $3,734 (liability)
+
+KEY RECOMMENDATIONS:
+1. Open high-yield savings account (+$3,600/yr free interest)
+2. Bid out uniforms (save $1,500-2,500/yr)
+3. Scale sponsorship program (+$3-8K/yr)
+4. Cancel/downgrade SurveyMonkey (save $888-1,188/yr)
+5. Pursue corporate matching grants (+$5-10K/yr)
+
+Keep answers concise, use numbers from the data, and be helpful. If asked something not in the data, say so.`;
+
+let chatHistory = [];
+let currentTab = 'ceo';
+
+const PROMPT_CHIPS = {
+  ceo: [
+    {icon:'💊', label:'Cash health check', prompt:'Based on our current cash position and burn rate, how many months of runway do we have? What is the minimum cash reserve we should maintain?'},
+    {icon:'📊', label:'Year-over-year comparison', prompt:'Compare our financial performance this year vs last year. Are we growing? Where are we improving and where are we slipping?'},
+    {icon:'📋', label:'60-second board summary', prompt:'Give me a 5-bullet executive summary I can read to the board in 60 seconds. Hit the most important numbers and one thing that needs attention.'},
+    {icon:'💰', label:'What should we do with surplus cash?', prompt:'We have $90K in cash and only need about $50K to operate. What should we do with the surplus $40K? Give me 3 options ranked by impact on the program.'},
+  ],
+  snapshot: [
+    {icon:'🔍', label:'Top 5 expenses deep-dive', prompt:'What are our top 5 expenses by dollar amount? For each one, tell me if it is growing, shrinking, or flat vs prior year. Flag anything that looks abnormal.'},
+    {icon:'⚠️', label:'Revenue concentration risk', prompt:'How dependent are we on a single revenue source? What happens to our P&L if registration drops 20% next year? What is our breakeven?'},
+    {icon:'🏪', label:'Vendor audit', prompt:'List every vendor we have paid more than $1,000 to in the last 12 months. For the top 3, have costs gone up year over year? Should we be getting competitive bids?'},
+    {icon:'💸', label:'Find hidden recurring costs', prompt:'Find all recurring monthly or annual charges. Calculate the total annual cost of subscriptions and recurring fees. Which ones can we cut without impacting operations?'},
+    {icon:'📝', label:'Tax compliance check', prompt:'As a 501(c)(3), what financial reporting do we owe the IRS? Based on our revenue level, do we need to file a Form 990 or 990-EZ? What is the deadline?'},
+  ],
+  seasonal: [
+    {icon:'📉', label:'Cash crunch predictor', prompt:'Based on our seasonal pattern, when is our lowest cash point each year? How much cash do we need going into Q2 to survive the uniform and league dues payments?'},
+    {icon:'🔮', label:'Predict next year registration', prompt:'Based on 3 years of registration data, predict next January-February registration revenue. Give me a bear case, base case, and bull case.'},
+    {icon:'❄️', label:'Fix the off-season drain', prompt:'We lose money every month from June through December. What is the total off-season drain? What would it take to break even in Q3-Q4 through fundraising or sponsorships?'},
+  ],
+  forecast: [
+    {icon:'🔥', label:'Stress test the forecast', prompt:'What happens to our year-end cash if uniforms cost 15% more than budgeted AND league dues go up 10%? Show me the stress scenario.'},
+    {icon:'📈', label:'Model adding a travel team', prompt:'If we add a fall travel team and it brings in $8,000 in revenue but costs $5,000 to run, how does that change our full-year P&L and cash position?'},
+    {icon:'🎯', label:'Fundraising ROI', prompt:'Our Super Bowl pool raised $5,859 and cost us $2,125 in prizes. What was the ROI? If we run 4 similar fundraisers per year, what is the projected annual impact?'},
+    {icon:'🏢', label:'Size the sponsorship opportunity', prompt:'We have 5 sponsors paying $200-$650 each. If we formalized a sponsorship program with 3 tiers and targeted 15 local businesses, what is the realistic revenue potential? Draft the tier structure.'},
+  ],
+  insights: [
+    {icon:'💡', label:'Capital allocation advice', prompt:'We have $90K in cash and only need about $50K to operate. What should we do with the surplus $40K? Give me 3 options ranked by impact on the program.'},
+    {icon:'🏗️', label:'Build a sponsorship deck', prompt:'Draft a sponsorship program with 3 tiers for local businesses. Include tier names, pricing, what each sponsor gets, and a target number of sponsors per tier.'},
+    {icon:'📊', label:'Benchmark us vs similar orgs', prompt:'How does our financial profile compare to a typical youth baseball organization of similar size? Are we spending too much or too little in any category?'},
+    {icon:'🚀', label:'Revenue diversification plan', prompt:'86% of our revenue comes from registration. Give me a concrete plan to get non-registration revenue to 30% within 2 years. What programs, events, or revenue streams should we launch?'},
+  ]
+};
+
+function renderChips() {
+  const container = document.getElementById('prompt-chips');
+  if (!container) return;
+  const chips = PROMPT_CHIPS[currentTab] || PROMPT_CHIPS.ceo;
+  container.innerHTML = '<div style="font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:1px;width:100%;margin-bottom:4px;">Try asking:</div>' +
+    chips.map(c => 
+      `<div onclick="useChip('${c.prompt.replace(/'/g,"\\'")}')" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:20px;padding:6px 12px;font-size:11px;color:#60a5fa;cursor:pointer;transition:background 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(59,130,246,0.2)'" onmouseout="this.style.background='rgba(59,130,246,0.08)'">${c.icon} ${c.label}</div>`
+    ).join('');
+}
+
+function useChip(prompt) {
+  document.getElementById('chat-input').value = prompt;
+  document.getElementById('prompt-chips').style.display = 'none';
+  sendMsg();
+}
+
+// Override showPage to track current tab
+const _origShowPage = typeof showPage === 'function' ? showPage : null;
+
+function toggleChat() {
+  const panel = document.getElementById('chat-panel');
+  const toggle = document.getElementById('chat-toggle');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'flex';
+    toggle.style.display = 'none';
+    const key = localStorage.getItem('fhcb_api_key');
+    if (key) {
+      document.getElementById('chat-setup').style.display = 'none';
+      document.getElementById('chat-messages').style.display = 'block';
+      document.getElementById('chat-input-area').style.display = 'block';
+      if (chatHistory.length === 0) {
+        addBotMsg("Hi! I'm your FHCB financial advisor. I have all your data loaded — ask me anything, or tap a suggestion below to get started. 🧠");
+        renderChips();
+      }
+    } else {
+      document.getElementById('chat-setup').style.display = 'block';
+    }
+  } else {
+    panel.style.display = 'none';
+    toggle.style.display = 'flex';
+  }
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-')) { alert('Please enter a valid OpenAI API key starting with sk-'); return; }
+  localStorage.setItem('fhcb_api_key', key);
+  document.getElementById('chat-setup').style.display = 'none';
+  document.getElementById('chat-messages').style.display = 'block';
+  document.getElementById('chat-input-area').style.display = 'block';
+  addBotMsg("Hi! I'm your FHCB financial advisor. I have all your data loaded — ask me anything, or tap a suggestion below to get started. 🧠");
+  renderChips();
+}
+
+function addBotMsg(text) {
+  const msgs = document.getElementById('msgs');
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-bottom:12px;';
+  div.innerHTML = '<div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:12px 16px;font-size:13px;color:#cbd5e1;line-height:1.6;max-width:90%;">' + text.replace(/\n/g,'<br>') + '</div>';
+  msgs.appendChild(div);
+  document.getElementById('chat-messages').scrollTop = 99999;
+}
+
+function addUserMsg(text) {
+  const msgs = document.getElementById('msgs');
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-bottom:12px;display:flex;justify-content:flex-end;';
+  div.innerHTML = '<div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 16px;font-size:13px;color:#fff;line-height:1.6;max-width:85%;">' + text + '</div>';
+  msgs.appendChild(div);
+  document.getElementById('chat-messages').scrollTop = 99999;
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  addUserMsg(q);
+
+  chatHistory.push({role:'user', content: q});
+
+  const key = localStorage.getItem('fhcb_api_key');
+  if (!key) { addBotMsg('Please set your API key first.'); return; }
+
+  addBotMsg('<span style="opacity:0.4;">Thinking...</span>');
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {role:'system', content: FINANCIAL_CONTEXT},
+          ...chatHistory
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      })
+    });
+    const data = await res.json();
+    // Remove thinking message
+    document.getElementById('msgs').lastChild.remove();
+
+    if (data.error) {
+      addBotMsg('Error: ' + data.error.message);
+    } else {
+      const reply = data.choices[0].message.content;
+      chatHistory.push({role:'assistant', content: reply});
+      addBotMsg(reply);
+    }
+  } catch(e) {
+    document.getElementById('msgs').lastChild.remove();
+    addBotMsg('Error connecting to OpenAI. Check your API key and try again.');
+  }
+}
+</script>
+
+<script>
+const PWD = 'fhcb2026';
+let loginAttempts = 0;
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_MIN = 15;
+
+function tryLogin() {
+  // Check lockout
+  const lockedUntil = localStorage.getItem('fhcb_locked_until');
+  if (lockedUntil && Date.now() < parseInt(lockedUntil)) {
+    const mins = Math.ceil((parseInt(lockedUntil) - Date.now()) / 60000);
+    document.getElementById('login-error').textContent = 'Account locked. Try again in ' + mins + ' minute' + (mins>1?'s':'') + '.';
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
+
+  const input = document.getElementById('pwd').value;
+  if (input === PWD) {
+    loginAttempts = 0;
+    localStorage.removeItem('fhcb_locked_until');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    setTimeout(() => document.getElementById('login-screen').style.display = 'none', 600);
+  } else {
+    loginAttempts++;
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      const lockUntil = Date.now() + (LOCKOUT_MIN * 60000);
+      localStorage.setItem('fhcb_locked_until', lockUntil.toString());
+      document.getElementById('login-error').textContent = 'Too many failed attempts. Locked for ' + LOCKOUT_MIN + ' minutes.';
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('pwd').disabled = true;
+    } else {
+      document.getElementById('login-error').textContent = 'Invalid password. ' + (MAX_ATTEMPTS - loginAttempts) + ' attempt' + ((MAX_ATTEMPTS-loginAttempts)>1?'s':'') + ' remaining.';
+      document.getElementById('login-error').style.display = 'block';
+    }
+    document.getElementById('pwd').value = '';
+    document.getElementById('pwd').focus();
+  }
+}
+
+// Check lockout on page load
+(function(){
+  const lockedUntil = localStorage.getItem('fhcb_locked_until');
+  if (lockedUntil && Date.now() < parseInt(lockedUntil)) {
+    const mins = Math.ceil((parseInt(lockedUntil) - Date.now()) / 60000);
+    document.getElementById('login-error').textContent = 'Account locked. Try again in ' + mins + ' minute' + (mins>1?'s':'') + '.';
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pwd').disabled = true;
+  }
+})();
+
+document.getElementById('pwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  currentTab = id;
+  renderChips();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>
