@@ -32,11 +32,17 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const branch = process.env.NEXT_PUBLIC_GIT_BRANCH || 'dev'
+  const commit = (process.env.NEXT_PUBLIC_GIT_COMMIT || 'unknown').slice(0, 8)
+
   return (
     <html lang="en">
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+      <body className="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
         <Header />
-        {children}
+        <div className="flex-1">{children}</div>
+        <footer className="border-t border-gray-800/50 py-3 px-4 text-center">
+          <span className="text-xs text-gray-600 font-mono">{branch}@{commit}</span>
+        </footer>
       </body>
     </html>
   )
