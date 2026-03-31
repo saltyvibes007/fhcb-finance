@@ -1,0 +1,39 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0e1a"/>
+      <stop offset="100%" style="stop-color:#111827"/>
+    </linearGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#60a5fa"/>
+      <stop offset="50%" style="stop-color:#22d3ee"/>
+      <stop offset="100%" style="stop-color:#34d399"/>
+    </linearGradient>
+    <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.1"/>
+      <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Grid lines -->
+  <line x1="0" y1="200" x2="1200" y2="200" stroke="url(#line-grad)" stroke-width="1"/>
+  <line x1="0" y1="350" x2="1200" y2="350" stroke="url(#line-grad)" stroke-width="1"/>
+  <line x1="0" y1="500" x2="1200" y2="500" stroke="url(#line-grad)" stroke-width="1"/>
+  <!-- Chart line -->
+  <polyline points="0,450 100,430 200,420 300,380 400,350 500,300 600,320 700,280 800,250 900,220 1000,200 1100,180 1200,160" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.3"/>
+  <polyline points="0,500 100,480 200,460 300,440 400,400 500,380 600,350 700,340 800,300 900,280 1000,250 1100,230 1200,200" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.2"/>
+  <!-- Dots -->
+  <circle cx="500" cy="300" r="4" fill="#3b82f6" opacity="0.5"/>
+  <circle cx="700" cy="280" r="4" fill="#3b82f6" opacity="0.5"/>
+  <circle cx="900" cy="220" r="4" fill="#22d3ee" opacity="0.5"/>
+  <circle cx="1000" cy="200" r="4" fill="#22d3ee" opacity="0.5"/>
+  <!-- Title -->
+  <text x="600" y="270" text-anchor="middle" font-family="Inter, -apple-system, sans-serif" font-size="72" font-weight="800" fill="url(#text-grad)">BloomFi</text>
+  <!-- Subtitle -->
+  <text x="600" y="330" text-anchor="middle" font-family="Inter, -apple-system, sans-serif" font-size="24" fill="#9ca3af">AI-Powered Financial Intelligence</text>
+  <!-- Tagline -->
+  <text x="600" y="380" text-anchor="middle" font-family="Inter, -apple-system, sans-serif" font-size="16" fill="#6b7280">Upload statements. Get instant CFO-grade dashboards.</text>
+  <!-- Bottom bar -->
+  <rect x="0" y="620" width="1200" height="10" fill="url(#text-grad)"/>
+</svg>
